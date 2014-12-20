@@ -50,9 +50,22 @@ public func future<T>(context c: ExecutionContext = Queue.global, task: () -> Re
     return promise.future
 }
 
+public protocol FutureType {
+    typealias ValueType
+    
+    var value: ValueType? { get }
+    
+    func map<U>(f: ValueType -> U) -> Future<U>
+    
+    func map<U>(context c: ExecutionContext, f: ValueType -> U) -> Future<U>
+    
+    func map<U>(f: (ValueType, inout NSError?) -> U?) -> Future<U>
+
+}
+
 public let NoSuchElementError = "NoSuchElementError"
 
-public class Future<T> {
+public class Future<T> : FutureType {
     
     typealias CallbackInternal = (future: Future<T>) -> ()
     typealias CompletionCallback = (result: Result<T>) -> ()

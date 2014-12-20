@@ -59,14 +59,14 @@ public class FutureUtils {
         }
     }
     
-    public class func fold<T,R>(seq: [Future<T>], context c: ExecutionContext = Queue.global, zero: R, op: (R, T) -> R) -> Future<R> {
-        return seq.reduce(Future.succeeded(zero), combine: { zero, elem in
+    public class func fold<S : SequenceType, F : FutureType, R, T where S.Generator.Element == F, F.ValueType == T>(seq: S, zero: R, context c: ExecutionContext = Queue.global, op: (R, T) -> R) -> Future<R> {
+        return reduce(seq, Future.succeeded(zero)) { zero, elem in
             return zero.flatMap { zeroVal in
-                elem.map(context: c) { elemVal, _ in
+                elem.map(context: c) { elemVal in
                     return op(zeroVal, elemVal)
                 }
             }
-        })
+        }
     }
     
     public class func sequence<T>(seq: [Future<T>]) -> Future<[T]> {
@@ -80,10 +80,9 @@ public class FutureUtils {
     }
     
     public class func traverse<T, U>(seq: [T], context c: ExecutionContext, fn: T -> Future<U>) -> Future<[U]> {
-        
-        return self.fold(map(seq, fn), context: c, zero: [U](), op: { (list: [U], elem: U) -> [U] in
+        return self.fold(map(seq, fn), zero: [U](), context: c, op: { (list: [U], elem: U) -> [U] in
             return list + [elem]
         })
     }
-    
 }
+
